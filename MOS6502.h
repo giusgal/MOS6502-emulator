@@ -39,8 +39,8 @@ private:
     std::function<uint8_t(uint16_t)> memoryRead;
 
     /**** Istructions ****
-     *  The first three characters represent the real name of the instruction.
-     *  The last three characters indicates the addressing modes:
+     *  The first three characters represents the real name of the instruction.
+     *  The last three characters indicates the addressing mode:
      *      ---abs: absolute
      *      ---abx: absolute,X indexed
      *      ---aby: absolute,Y indexed
