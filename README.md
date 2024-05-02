@@ -7,12 +7,12 @@ Mos 6502 emulator in C++.
 	- Decimal mode not implemented yet
 - All addressing modes
 
-#### Project structure
+### Project structure
 - `./src/cpu/*`: Main files
 - `./src/memory/*`: Memory utility functions used for debugging (loading, hex dump, write, read...)
 - `./src/test/*`: Test suite
 
-### Getting started
+## Getting started
 
 The MOS6502 class exposes the following functions:
 - `MOS6502(fWrite w, fRead r)`: The class constructor takes as arguments two function pointers, namely `void (*fWrite)(uint16_t, uint8_t)` and `uint8_t (*fRead)(uint16_t)`. These functions are used by the MOS6502 object to access memory (or virtual memory-mapped devices), see below for an example
@@ -25,10 +25,10 @@ The MOS6502 class exposes the following functions:
 - `uint8_t/uint16_t get*()`: getters
 - `void set*(uint8_t/uint16_t)`: setters
 
-#### Clock emulation
+### Clock emulation
 To disable clock speed emulation use the `-D _NO_DELAY_` option during the compilation step
     
-#### Example
+### Example
 
 ```cpp
 #include <iostream>
@@ -62,7 +62,7 @@ int main(void) {
 }
 ```
 
-### Resources
+## Resources
 
 - <https://www.masswerk.at/6502/6502_instruction_set.html>
 - <http://6502.org/>
