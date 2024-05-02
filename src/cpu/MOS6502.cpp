@@ -7,8 +7,10 @@
 using BYTE = uint8_t;
 using WORD = uint16_t;
 
-MOS6502::MOS6502(std::function<void(uint16_t, uint8_t)> w, std::function<uint8_t(uint16_t)> r):
-    memoryWrite{w}, memoryRead{r} {
+MOS6502::MOS6502(fWrite w, fRead r)
+{
+    memoryWrite = w; 
+    memoryRead = r;
     reset();
 }
 
@@ -40,9 +42,16 @@ void MOS6502::execute(WORD init_PC, WORD end_PC) {
     PC = init_PC;
 
     while(PC <= end_PC) {
-        BYTE inst{memoryRead(PC++)};  //Fetch instruction from memory
+        // Debugging
+        if(breakpoint != 0 && PC == breakpoint) {
+            break;
+        }
 
-        callOpCode(inst);             //Execute
+        //Fetch instruction from memory
+        BYTE inst{memoryRead(PC++)};
+
+        //Execute
+        callOpCode(inst);
     }
 }
 
@@ -59,6 +68,63 @@ std::string MOS6502::info() const {
         << "   NV-BDIZC\n";
     return out.str();
 }
+
+// TODO: make possible to add more than one breakpoint
+void MOS6502::setBreakpoint(uint16_t addr) {
+    this->breakpoint = addr;
+}
+
+/**** Getter and Setter ****/
+void MOS6502::setPC(uint16_t PC) {
+    this->PC = PC;
+}
+
+void MOS6502::setAC(uint8_t AC) {
+    this->AC = AC;
+}
+
+void MOS6502::setX(uint8_t X) {
+    this->X = X;
+}
+
+void MOS6502::setY(uint8_t Y) {
+    this->Y = Y;
+}
+
+void MOS6502::setSR(uint8_t SR) {
+    this->SR = SR;
+}
+
+void MOS6502::setSP(uint8_t SP) {
+    this->SP = SP;
+}
+
+
+uint16_t MOS6502::getPC() {
+    return PC;
+}
+
+uint8_t MOS6502::getAC() {
+    return AC;
+}
+
+uint8_t MOS6502::getX() {
+    return X;
+}
+
+uint8_t MOS6502::getY() {
+    return Y;
+}
+
+uint8_t MOS6502::getSR() {
+    return SR.to_ulong();
+}
+
+uint8_t MOS6502::getSP() {
+    return SP;
+}
+/***************************/
+
 
 /**** Addressing Modes  ****/
 uint16_t MOS6502::absolute() {
@@ -96,10 +162,12 @@ uint16_t MOS6502::indirect() {
 uint16_t MOS6502::Xindirect() {
     BYTE LB = memoryRead(PC++);
 
-    BYTE target = LB + X;                                           //target remain in zeropage
+    //target remain in zeropage
+    BYTE target = LB + X;
 
     BYTE LB_effective = memoryRead(target);
-    BYTE HB_effective = memoryRead(static_cast<uint8_t>(target+1));   //(target+1) remain in zeropage
+    //(target+1) remain in zeropage
+    BYTE HB_effective = memoryRead(static_cast<uint8_t>(target+1));
 
     return HB_effective*16*16+LB_effective;
 }
@@ -108,7 +176,8 @@ uint16_t MOS6502::indirectY(bool& page_crossed) {
     BYTE LB = memoryRead(PC++);
 
     BYTE LB_effective = memoryRead(LB);
-    BYTE HB_effective = memoryRead(static_cast<uint8_t>(LB+1));       //(LB+1) remain in zeropage
+    //(LB+1) remain in zeropage
+    BYTE HB_effective = memoryRead(static_cast<uint8_t>(LB+1));
 
     page_crossed = (static_cast<uint8_t>(LB_effective+Y) < LB_effective);
 
@@ -126,7 +195,9 @@ uint16_t MOS6502::relative(bool& page_crossed) {
     //  0x01 =>  1
     if((REL & (1U<<7))) {
         //If negative
-        effective_address = PC - ( static_cast<uint8_t>( (~REL) + 1 ) ); //Bitwise not then +1 to obtain the abs value of REL
+        
+        //Bitwise not then +1 to obtain the abs value of REL
+        effective_address = PC - ( static_cast<uint8_t>( (~REL) + 1 ) ); 
     } else {
         //If positive
         effective_address = PC + REL;
@@ -143,11 +214,13 @@ uint8_t MOS6502::zeropage() {
 }
 
 uint8_t MOS6502::zeropageX() {
-    return memoryRead(PC++) + X;      //remain in zeropage
+    //remain in zeropage
+    return memoryRead(PC++) + X;
 }
 
 uint8_t MOS6502::zeropageY() {
-    return memoryRead(PC++) + Y;      //remain in zeropage
+    //remain in zeropage
+    return memoryRead(PC++) + Y;
 }
 /***************************/
 
@@ -157,12 +230,10 @@ void MOS6502::callOpCode(BYTE index) {
 }
 
 void MOS6502::waitForCycles(BYTE c) {
-    for(uint16_t i{0}; i < c; ++i) {
-        ++cycles;
-
-        //2Mhz clock ==> 1/2Mhz=500ns per cycles
-        std::this_thread::sleep_for(std::chrono::nanoseconds(500));
-    }
+    #ifndef _NO_DELAY_
+    cycles += c;
+    std::this_thread::sleep_for(std::chrono::nanoseconds(500*c));
+    #endif
 }
 /*****************/
 
@@ -216,21 +287,21 @@ void MOS6502::addWithCarry(uint8_t memory) {
 }
 
 void MOS6502::subWithBorrow(uint8_t memory) {
-    if(SR[DF] == 0) { //Binary Mode
-        //Same as AC - memory - (~SR[CF])
-        BYTE tmp = AC + (~memory) + SR[CF]; //(*)
-        //Carry flag set if tmp is >= 0 (bit 7 not set)
-        SR[CF] = ~(tmp & (1U<<7));
-        //Negative flag
-        SR[NF] = (tmp & (1U<<7));
-        //Zero flag
-        SR[ZF] = (tmp==0);
-        //Overflow flag (same as the sum case, considering (*))
-        SR[VF] = (AC^static_cast<uint8_t>(tmp))&((~memory)^static_cast<uint8_t>(tmp))&(1U<<7);
-        AC = tmp;
-    } else { //Decimal Mode
-        //To be implemented
-    }
+    /*
+     How does it work?
+      1. In two's complement a negative number is obtained
+         by complementing the abs. value of the number and
+         by adding 1 at the end.
+          Example:
+           A - memory = A + (-memory) = A + (~memory+1)
+      2. The operation done by the MOS6502 during an SBC
+         is (C: carry flag):
+          A - memory - (~C) = A + ~memory + (1 - ~C)
+            = A + ~memory + C
+      3. So, basically an ADC with ~memory in place of
+         memory.
+    */
+    addWithCarry(~memory);
 }
 /********************************/
 
@@ -238,14 +309,21 @@ void MOS6502::subWithBorrow(uint8_t memory) {
 void MOS6502::BRKimp() { //
     waitForCycles(7);
 
-    push((PC+1)/(16*16));                           //Push HB first
-    push(PC+1);                                     //Push LB
-    SR[BF] = 1;                                     //Set Bflag
-    push(SR.to_ulong());                            //Push Status register
-    SR[BF] = 0;                                     //Unset BFlag (BFlag must be set only in the copy of the SR into the stack)
-    PC = memoryRead(0xffff)*16*16+memoryRead(0xfffe);   //Modify the program counter to jump at the istruction poninted by the IRQ vector
+    //Push HB first
+    push((PC+1)/(16*16));
+    //Push LB
+    push(PC+1);
+    //Set Bflag
+    SR[BF] = 1;
+    //Push Status register
+    push(SR.to_ulong());
+    //Unset BFlag (BFlag must be set only in the copy of the SR into the stack)
+    SR[BF] = 0;
+    //Modify the program counter to jump at the istruction poninted by the IRQ vector
+    PC = memoryRead(0xffff)*16*16+memoryRead(0xfffe);
         /*     HB      */      /*     LB      */
-    SR[IF] = 1;                                     //Set the IFlag
+    //Set the IFlag
+    SR[IF] = 1;
 }
 void MOS6502::ORAxin() { //
     waitForCycles(6);
@@ -366,8 +444,12 @@ void MOS6502::PLPimp() { //
     waitForCycles(4);
 
     BYTE tmpBF{SR[BF]};
+    BYTE tmpBit5{SR[5]};
     SR = pull();
-    SR[BF] = tmpBF;     //ignore break flag
+    //ignore break flag
+    SR[BF] = tmpBF;
+    //ignore bit 5
+    SR[5] = tmpBit5;
 } 
 void MOS6502::ANDimm() { //
     waitForCycles(2);
