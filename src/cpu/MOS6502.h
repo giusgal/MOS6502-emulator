@@ -26,12 +26,12 @@ public:
     void setSR(uint8_t SR);
     void setSP(uint8_t SP);
 
-    uint16_t getPC();
-    uint8_t getAC();
-    uint8_t getX();
-    uint8_t getY();
-    uint8_t getSR();
-    uint8_t getSP();
+    uint16_t getPC() const;
+    uint8_t getAC() const;
+    uint8_t getX() const;
+    uint8_t getY() const;
+    uint8_t getSR() const;
+    uint8_t getSP() const;
 
 private:
     /**** Registers and Memory ****/
@@ -56,8 +56,8 @@ private:
     uint16_t breakpoint = 0;            //Breakpoint (for debugging)
 
     /**** Function objects for memory read and write operations ****/
-    fWrite memoryWrite;
-    fRead memoryRead;
+    const fWrite memoryWrite;
+    const fRead memoryRead;
 
     /**** Istructions ****
      *  The first three characters represent the real name of the instruction.

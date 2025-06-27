@@ -7,10 +7,9 @@
 using BYTE = uint8_t;
 using WORD = uint16_t;
 
-MOS6502::MOS6502(fWrite const & w, fRead const & r)
+MOS6502::MOS6502(fWrite const & w, fRead const & r):
+    memoryWrite{w}, memoryRead{r}
 {
-    memoryWrite = w; 
-    memoryRead = r;
     reset();
 }
 
@@ -100,27 +99,27 @@ void MOS6502::setSP(uint8_t SP) {
 }
 
 
-uint16_t MOS6502::getPC() {
+uint16_t MOS6502::getPC() const {
     return PC;
 }
 
-uint8_t MOS6502::getAC() {
+uint8_t MOS6502::getAC() const {
     return AC;
 }
 
-uint8_t MOS6502::getX() {
+uint8_t MOS6502::getX() const {
     return X;
 }
 
-uint8_t MOS6502::getY() {
+uint8_t MOS6502::getY() const {
     return Y;
 }
 
-uint8_t MOS6502::getSR() {
+uint8_t MOS6502::getSR() const {
     return SR.to_ulong();
 }
 
-uint8_t MOS6502::getSP() {
+uint8_t MOS6502::getSP() const {
     return SP;
 }
 /***************************/
