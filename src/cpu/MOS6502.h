@@ -1,16 +1,16 @@
 #ifndef MOS6502_H
 #define MOS6502_H
 
+#include <functional>
 #include <string>
 #include <bitset>
 #include <cstdint>
 
-typedef void (*fWrite)(uint16_t, uint8_t);
-typedef uint8_t (*fRead)(uint16_t);
-
 class MOS6502 {
+    using fWrite = std::function<void(uint16_t, uint8_t)>;
+    using fRead  = std::function<uint8_t(uint16_t)>;
 public:
-    MOS6502(fWrite w, fRead r);
+    MOS6502(fWrite const & w, fRead const & r);
     void IRQ();
     void NMI();
     void execute(uint16_t init_PC, uint16_t end_PC);
@@ -42,20 +42,20 @@ private:
     std::bitset<8> SR;                  //Status Register
     uint8_t SP;                         //Stack Pointer
 
-    const uint8_t CF{0};                //Carry flag index
-    const uint8_t ZF{1};                //Zero flag index
-    const uint8_t IF{2};                //Interrupt flag index
-    const uint8_t DF{3};                //Decimal flag index
-    const uint8_t BF{4};                //Break flag index
-    const uint8_t VF{6};                //Overflow flag index
-    const uint8_t NF{7};                //Negative flag index
+    static constexpr uint8_t CF{0};     //Carry flag index
+    static constexpr uint8_t ZF{1};     //Zero flag index
+    static constexpr uint8_t IF{2};     //Interrupt flag index
+    static constexpr uint8_t DF{3};     //Decimal flag index
+    static constexpr uint8_t BF{4};     //Break flag index
+    static constexpr uint8_t VF{6};     //Overflow flag index
+    static constexpr uint8_t NF{7};     //Negative flag index
 
     /**** Others ****/
     uint64_t cycles = 0;                //Cycles counter
     uint8_t currentOpCodeCycles = 0;    //Cycles for the current opCode
     uint16_t breakpoint = 0;            //Breakpoint (for debugging)
 
-    /**** Function pointers for memory read and write operations ****/
+    /**** Function objects for memory read and write operations ****/
     fWrite memoryWrite;
     fRead memoryRead;
 

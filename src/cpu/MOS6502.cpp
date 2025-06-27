@@ -7,7 +7,7 @@
 using BYTE = uint8_t;
 using WORD = uint16_t;
 
-MOS6502::MOS6502(fWrite w, fRead r)
+MOS6502::MOS6502(fWrite const & w, fRead const & r)
 {
     memoryWrite = w; 
     memoryRead = r;
