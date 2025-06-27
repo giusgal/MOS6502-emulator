@@ -1,4 +1,4 @@
-# MOS6502-emulator
+# MOS6502
 Mos 6502 emulator in C++.
 
 ### Overview
