@@ -1,18 +1,16 @@
-CPU_SRCS = ../cpu
-MEMORY_SRCS = ../memory
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++11
+PREPROP = -D_NO_DELAY_
 
-./test: $(CPU_SRCS)/MOS6502.o $(MEMORY_SRCS)/Memory.o ./test.cpp
-	g++ -c -o ./test.o ./test.cpp
-	g++ -o ./test ./test.o $(CPU_SRCS)/MOS6502.o $(MEMORY_SRCS)/Memory.o
+CPU_DIR = ../cpu
+MEMORY_DIR = ../memory
+TEST_DIR = .
 
-$(CPU_SRCS)/MOS6502.o: $(CPU_SRCS)/MOS6502.h $(CPU_SRCS)/MOS6502.cpp
-	g++ -c -D _NO_DELAY_ -o $(CPU_SRCS)/MOS6502.o $(CPU_SRCS)/MOS6502.cpp
+SRCS = $(TEST_DIR)/test.cpp $(CPU_DIR)/MOS6502.cpp $(MEMORY_DIR)/Memory.cpp
+HEADERS = $(CPU_DIR)/MOS6502.h $(MEMORY_DIR)/Memory.h
 
-$(MEMORY_SRCS)/Memory.o: $(MEMORY_SRCS)/Memory.h $(MEMORY_SRCS)/Memory.cpp
-	g++ -c -o $(MEMORY_SRCS)/Memory.o $(MEMORY_SRCS)/Memory.cpp
+test: $(SRCS) $(HEADERS)
+	$(CXX) -o $@ $(CXXFLAGS) $(PREPROP) $(SRCS)
 
 clean:
-	rm -f $(CPU_SRCS)/*.o
-	rm -f $(MEMORY_SRCS)/*.o
-	rm -f ./test.o
-	rm -f ./test
+	rm -rf ./test

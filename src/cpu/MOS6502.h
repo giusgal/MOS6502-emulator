@@ -3,6 +3,7 @@
 
 #include <string>
 #include <bitset>
+#include <cstdint>
 
 typedef void (*fWrite)(uint16_t, uint8_t);
 typedef uint8_t (*fRead)(uint16_t);

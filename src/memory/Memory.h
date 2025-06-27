@@ -2,6 +2,7 @@
 #define MEMORY_H
 
 #include <string>
+#include <cstdint>
 
 #define SIZE 0x10000 // 64KiB
 
